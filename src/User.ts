@@ -1,21 +1,21 @@
-import { v4 as uuidv4 } from 'uuid';
+import { ObjectId } from 'mongodb';
 import Item from './Item';
 
 class User {
-  private id: string;
+  private _id: ObjectId;
   private name: string;
   private age: number;
-  private cart: Item[];
+  private cart: ObjectId[];
 
   constructor(name: string, age: number) {
-    this.id = uuidv4();
+    this._id = new ObjectId();
     this.name = name;
     this.age = age;
     this.cart = [];
   }
 
   public getId(): string {
-    return this.id;
+    return this._id.toHexString();
   }
 
   public getName(): string {
@@ -26,18 +26,18 @@ class User {
     return this.age;
   }
 
-  public addToCart(item: Item): void {
-    this.cart.push(item);
+  public addToCart(itemId: string): void {
+    this.cart.push(new ObjectId(itemId));
   }
 
-  public removeFromCart(item: Item): void {
-    this.cart = this.cart.filter((cartItem) => cartItem.getId() !== item.getId());
+  public removeFromCart(itemId: string): void {
+    this.cart = this.cart.filter((cartItemId) => cartItemId.toHexString() !== itemId);
   }
 
-  public removeQuantityFromCart(item: Item, quantity: number): void {
-    let count = quantity;
-    this.cart = this.cart.filter((cartItem) => {
-      if (count > 0 && cartItem.getId() === item.getId()) {
+  public removeQuantityFromCart(itemId: string, quantity: number): void {
+    const count = quantity;
+    this.cart = this.cart.filter((cartItemId) => {
+      if (count > 0 && cartItemId.toHexString() === itemId) {
         count--;
         return false;
       }
@@ -45,15 +45,38 @@ class User {
     });
   }
 
-  public cartTotal(): number {
-    return this.cart.reduce((total, item) => total + item.getPrice(), 0);
+  public cartTotal(): Promise<number> {
+    const collection = // get your MongoDB collection reference here
+    return collection
+      .aggregate([
+        { $match: { _id: { $in: this.cart } } },
+        { $group: { _id: null, total: { $sum: '$price' } } },
+      ])
+      .toArray()
+      .then((result) => (result.length > 0 ? result[0].total : 0));
   }
 
-  public printCart(): void {
-    console.log(`Items in ${this.getName()}'s cart:`);
-    this.cart.forEach((item) => {
-      console.log(`- ${item.getName()}: $${item.getPrice()}`);
-    });
+  public printCart(): Promise<void> {
+    const collection = // get your MongoDB collection reference here
+    return collection
+      .find({ _id: { $in: this.cart } })
+      .toArray()
+      .then((items) => {
+        console.log(`Items in ${this.getName()}'s cart:`);
+        items.forEach((item) => {
+          console.log(`- ${item.name}: $${item.price}`);
+        });
+      });
+  }
+
+  public save(): Promise<void> {
+    const collection = // get your MongoDB collection reference here
+    return collection.insertOne(this);
+  }
+
+  public static findById(id: string): Promise<User | null> {
+    const collection = // get your MongoDB collection reference here
+    return collection.findOne({ _id: new ObjectId(id) });
   }
 }
 

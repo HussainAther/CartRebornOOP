@@ -1,37 +1,44 @@
+import { connectToDatabase } from './database';
 import Shop from './Shop';
 import User from './User';
 import Item from './Item';
 
-// Create a Shop
-const shop = new Shop();
+async function main() {
+  await connectToDatabase();
 
-// Create Items and add them to the shop
-const item1 = new Item('Item 1', 10, 'Description 1');
-const item2 = new Item('Item 2', 20, 'Description 2');
-const item3 = new Item('Item 3', 30, 'Description 3');
+  // Create a Shop
+  const shop = new Shop();
 
-shop.addItem(item1);
-shop.addItem(item2);
-shop.addItem(item3);
+  // Create Items and add them to the shop
+  const item1 = new Item('Item 1', 10, 'Description 1');
+  const item2 = new Item('Item 2', 20, 'Description 2');
+  const item3 = new Item('Item 3', 30, 'Description 3');
 
-// Create a User
-const user = new User('John', 25);
+  await item1.save();
+  await item2.save();
+  await item3.save();
 
-// Add items to the user's cart
-user.addToCart(item1);
-user.addToCart(item2);
-user.addToCart(item2); // Add another item2
+  // Create a User
+  const user = new User('John', 25);
 
-// Print the user's cart
-user.printCart();
+  // Add items to the user's cart
+  user.addToCart(item1.getId());
+  user.addToCart(item2.getId());
+  user.addToCart(item2.getId()); // Add another item2
 
-// Remove item2 from the cart
-user.removeFromCart(item2);
+  // Print the user's cart
+  await user.printCart();
 
-// Remove 1 quantity of item1 from the cart
-user.removeQuantityFromCart(item1, 1);
+  // Remove item2 from the cart
+  user.removeFromCart(item2.getId());
 
-// Print the user's cart and total
-user.printCart();
-console.log('Total:', user.cartTotal());
+  // Remove 1 quantity of item1 from the cart
+  user.removeQuantityFromCart(item1.getId(), 1);
+
+  // Print the user's cart and total
+  await user.printCart();
+  console.log('Total:', await user.cartTotal());
+}
+
+main().catch((error) => console.error(error));
 

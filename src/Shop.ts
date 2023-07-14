@@ -1,18 +1,15 @@
 import Item from './Item';
+import { getCollection } from './database';
 
 class Shop {
-  private items: Item[];
+  private collection = getCollection('items');
 
-  constructor() {
-    this.items = [];
+  public async addItem(item: Item): Promise<void> {
+    await this.collection.insertOne(item);
   }
 
-  public getItems(): Item[] {
-    return this.items;
-  }
-
-  public addItem(item: Item): void {
-    this.items.push(item);
+  public async getItems(): Promise<Item[]> {
+    return this.collection.find().toArray();
   }
 }
 
